@@ -1,110 +1,104 @@
-# Task 7: 左侧输入面板（动态表单）
+# Task 7: 触发词引擎与优先级路由
+
+> **对应文档**: 七、使用指南 — 触发词 + 技能调用优先级
 
 **Files:**
-- Modify: `app/templates/step.html`
-- Modify: `app/static/css/main.css`
-- Modify: `app/static/js/app.js`
+- Create: `app/trigger_router.py`
 
-## Step 1: 动态表单渲染（Jinja2 + htmx）
+## Step 1: 触发词映射表
 
-在 step.html 的左侧面板中：
-
-```html
-<div class="input-panel" id="input-panel">
-    <div class="panel-header">
-        <h2>{{ step_def.name }}</h2>
-        <span class="method-badge">{{ step_def.method }}</span>
-    </div>
-    
-    <form hx-post="/api/step/{{ step_id }}/save"
-          hx-target="#output-panel"
-          hx-swap="innerHTML"
-          hx-indicator="#analyzing-indicator">
-        
-        <input type="hidden" name="session_id" value="{{ session_id }}">
-        
-        {% for field in step_def.fields %}
-        <div class="form-group">
-            <label for="{{ field.id }}">
-                {{ field.label }}
-                {% if field.required %}<span class="required">*</span>{% endif %}
-            </label>
-            
-            {% if field.type == 'textarea' %}
-            <textarea id="{{ field.id }}" name="{{ field.id }}"
-                      rows="4" placeholder="{{ field.placeholder }}"
-                      {% if field.required %}required{% endif %}
-            >{{ step_input.fields.get(field.id, '') }}</textarea>
-            
-            {% elif field.type == 'number' %}
-            <input type="number" id="{{ field.id }}" name="{{ field.id }}"
-                   value="{{ step_input.fields.get(field.id, '') }}"
-                   placeholder="{{ field.placeholder }}"
-                   {% if field.required %}required{% endif %}>
-            
-            {% else %}
-            <input type="text" id="{{ field.id }}" name="{{ field.id }}"
-                   value="{{ step_input.fields.get(field.id, '') }}"
-                   placeholder="{{ field.placeholder }}"
-                   {% if field.required %}required{% endif %}>
-            {% endif %}
-        </div>
-        {% endfor %}
-        
-        <button type="submit" class="btn-submit">
-            提交分析
-        </button>
-        <div id="analyzing-indicator" class="htmx-indicator">
-            ⏳ 分析中...
-        </div>
-    </form>
-    
-    <!-- 步骤间快速跳转 -->
-    <div class="step-quick-nav">
-        {% if prev_step %}<a href="/step/{{ prev_step }}?session_id={{ session_id }}" class="btn-nav">← 上一步</a>{% endif %}
-        {% if next_step %}<a href="/step/{{ next_step }}?session_id={{ session_id }}" class="btn-nav">下一步 →</a>{% endif %}
-    </div>
-</div>
+```python
+TRIGGER_MAP = {
+    "战略洞察": {
+        "triggers": ["做战略洞察", "五看分析", "看行业", "看客户", "看竞争", "战略分析", "行业洞察"],
+        "skills": ["sn-deep-research", "mbb-strategist"],
+        "tier": "tier1",
+    },
+    "战略解码": {
+        "triggers": ["做战略解码", "BEM解码", "设计KPI", "分解重点工作", "战略解码", "BEM"],
+        "skills": ["excel-data-analysis", "planning-with-files"],
+        "tier": "tier2",
+    },
+    "执行监控": {
+        "triggers": ["跟踪执行进度", "经营分析", "战略复盘", "执行监控", "进度跟踪"],
+        "skills": ["planning-with-files", "excel-data-analysis"],
+        "tier": "tier3",
+    },
+    "竞品分析": {
+        "triggers": ["竞品分析", "竞争格局", "竞争对手"],
+        "skills": ["mbb-strategist", "sn-search-code"],
+        "tier": "tier1",
+    },
+    "行业研究": {
+        "triggers": ["行业研究", "深度研究", "行业分析"],
+        "skills": ["sn-deep-research"],
+        "tier": "tier1",
+    },
+}
 ```
 
-## Step 2: 输入面板CSS
+## Step 2: 技能优先级系统
 
-- 左侧固定宽度 340px
-- 表单字段间距 16px
-- `input`/`textarea` 深色背景 + 浅色文字
-- focus 状态金色边框
-- required 字段红色星号
-
-## Step 3: htmx 表单提交逻辑 (app.js)
-
-```javascript
-// 表单提交后自动刷新导航条状态
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.target.id === 'output-panel') {
-        // 刷新导航条
-        htmx.ajax('GET', '/api/nav-status?session_id=' + getSessionId(), {
-            target: '#step-navigation',
-            swap: 'innerHTML'
-        });
-    }
-});
+```python
+SKILL_PRIORITY = {
+    "sn-deep-research": {
+        "priority": 1,
+        "label": "第一优先级",
+        "trigger_condition": "用户要求深度研究/行业研究/竞品分析",
+        "description": "深度研究编排器 — 规划→取证→综合→成稿全流程",
+    },
+    "mbb-strategist": {
+        "priority": 2,
+        "label": "第二优先级",
+        "trigger_condition": "用户要求战略分析/SWOT/PESTEL/波特五力",
+        "description": "MBB战略框架 — SWOT/PESTEL/波特五力/GTM/定价/风险",
+    },
+    "excel-analysis": {
+        "priority": 3,
+        "label": "第三优先级",
+        "trigger_condition": "用户要求数据分析/KPI设计/可视化",
+        "description": "Excel数据分析系列 — 30+分析技能",
+    },
+    "planning-with-files": {
+        "priority": 4,
+        "label": "第四优先级",
+        "trigger_condition": "多步骤任务/需要进度跟踪",
+        "description": "文件化规划 — task_plan.md / findings.md / progress.md",
+    },
+}
 ```
 
-## Step 4: 添加导航状态API端点
+## Step 3: TriggerRouter 类
 
-在 app.py 中添加 `/api/nav-status` 端点，返回当前会话所有步骤的状态HTML片段。
+```python
+class TriggerRouter:
+    @staticmethod
+    def match_triggers(user_input: str) -> list:
+        """匹配触发词，返回匹配的场景列表"""
+        
+    @staticmethod
+    def get_skills_for_scenario(scenario: str) -> list:
+        """获取场景对应的技能调用列表"""
+        
+    @staticmethod
+    def get_priority_chain(scenario: str) -> list:
+        """获取按优先级排序的技能调用链"""
+        
+    @staticmethod
+    def suggest_entry_point(user_input: str) -> str:
+        """根据触发词建议最佳入口步骤ID"""
+```
 
-## Step 5: 验证
+## Step 4: API端点
 
-手动提交一个表单，确认：
-- 数据保存到session
-- 输出面板展示结果
-- 导航条状态更新
+```python
+@app.route("/api/trigger/match", methods=["POST"])
+def match_trigger():
+    """POST {user_input} → 返回匹配场景+推荐技能+入口步骤"""
+```
 
-## Step 6: Commit
+## Step 5: Commit
 
 ```bash
-git add -A
-git commit -m "feat: dynamic input panel with htmx form submission"
-git push origin main
+git add -A && git commit -m "feat: trigger router + priority system (matching user spec section 7)"
 ```
