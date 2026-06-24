@@ -1,117 +1,75 @@
-# Task 8: 中间输出面板与级联进度指示
+# Task 8: 会话管理与API路由
 
 **Files:**
-- Modify: `app/templates/step.html`
-- Modify: `app/static/css/main.css`
+- Create: `app/session.py`
+- Modify: `app/app.py` → 添加完整API路由
 
-## Step 1: 输出面板模板
+## Step 1: 会话管理 (session.py)
 
-```html
-<div class="output-panel" id="output-panel">
-    <!-- 上游数据折叠区 -->
-    {% if upstream_steps %}
-    <details class="upstream-summary" open>
-        <summary>
-            📋 前置步骤摘要 
-            <span class="badge">{{ upstream_steps|length }}步已完成</span>
-        </summary>
-        <div class="upstream-cards">
-            {% for us in upstream_steps %}
-            <div class="upstream-card">
-                <span class="upstream-step-num">{{ us.number }}</span>
-                <strong>{{ us.name }}</strong>
-                <p>{{ us.summary[:120] }}{% if us.summary|length > 120 %}...{% endif %}</p>
-                <span class="upstream-status {{ us.status }}">{{ us.status_label }}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </details>
-    {% endif %}
-    
-    <!-- 级联警告 -->
-    {% if downstream_stale_count > 0 %}
-    <div class="cascade-warning">
-        ⚠️ 修改此步骤将导致下游 <strong>{{ downstream_stale_count }}</strong> 个步骤需要重新计算。
-        <button class="btn-recalculate" 
-                hx-post="/api/step/{{ step_id }}/recalculate"
-                hx-target="#output-panel">
-            确认重算
-        </button>
-    </div>
-    {% endif %}
-    
-    <!-- 分析结果 -->
-    <div class="analysis-result">
-        {% if step_output.status == 'pending' %}
-        <div class="empty-state">
-            <p>请在左侧填写输入信息并提交分析</p>
-        </div>
-        {% elif step_output.status == 'analyzing' %}
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>正在分析中...</p>
-        </div>
-        {% elif step_output.status in ('done', 'stale') %}
-        <div class="result-content {% if step_output.status == 'stale' %}stale{% endif %}">
-            <div class="result-header">
-                <h3>分析结果</h3>
-                <div class="result-actions">
-                    <button class="btn-action" onclick="copyResult()">📋 复制</button>
-                    <button class="btn-action" hx-post="/api/step/{{ step_id }}/recalculate" hx-target="#output-panel">
-                        🔄 重新生成
-                    </button>
-                </div>
-            </div>
-            <div class="markdown-body">
-                {{ step_output.content | safe }}
-            </div>
-        </div>
-        {% else %}
-        <div class="error-state">
-            <p>❌ 分析出错：{{ step_output.content }}</p>
-        </div>
-        {% endif %}
-    </div>
-</div>
-```
+支持创建/读取/保存/过期清理，JSON持久化到 app/instance/
 
-## Step 2: 级联重算端点 (app.py)
+## Step 2: API路由 (app.py)
 
 ```python
-@app.route("/api/step/<step_id>/recalculate", methods=["POST"])
-def recalculate_step(step_id):
-    sid = request.form.get("session_id") or request.args.get("session_id")
-    ctx = get_session(sid)
-    if not ctx:
-        return "Session not found", 404
-    
-    result = StepEngine.analyze(step_id, ctx)
-    ctx.set_step_result(step_id, result, summary=result[:100])
-    ctx.invalidate_downstream(step_id)
-    save_session(ctx)
-    
-    return render_template("_output_panel.html", 
-                          step_output=ctx.get_step_output(step_id),
-                          step_def=STEP_DEFINITIONS.get(step_id))
+# === 会话 ===
+POST /api/session/start          → 创建新会话
+GET  /api/session/<id>/status    → 会话状态（所有步骤完成情况）
+
+# === 步骤操作 ===
+GET  /api/step/<step_id>?session_id=X         → 获取步骤数据（定义+输入+输出）
+POST /api/step/<step_id>/save                  → 保存输入+执行分析
+POST /api/step/<step_id>/recalculate           → 单体重算
+POST /api/cascade/recalculate                  → 级联重算（从指定步骤起）
+
+# === 技能 ===
+GET  /api/skills/list                          → 所有技能清单
+GET  /api/step/<step_id>/skills                → 该步骤关联技能
+
+# === 触发词 ===
+POST /api/trigger/match                        → 匹配触发词
+
+# === 报告 ===
+GET  /api/report/L1?session_id=X               → L1报告
+GET  /api/report/L2?session_id=X               → L2报告
+GET  /api/report/L3?session_id=X               → L3报告
+GET  /api/report/full?session_id=X             → 完整三份报告
+
+# === 导航状态 ===
+GET  /api/nav/status?session_id=X              → 导航条状态HTML片段
+
+# === DSTE日历 ===
+GET  /api/dste/calendar?session_id=X           → DSTE日历数据
 ```
 
-## Step 3: 输出面板CSS
+## Step 3: 步骤操作核心逻辑
 
-- `upstream-summary`: 折叠卡片，半透明背景
-- `cascade-warning`: 橙色警告横幅
-- `result-content`: 白色卡片，Markdown渲染
-- `.stale` 覆盖层：半透明+斜条纹背景+角标"数据已过期"
+```python
+@app.route("/api/step/<step_id>/save", methods=["POST"])
+def save_step_input(step_id):
+    data = request.get_json()
+    ctx = get_session(data["session_id"])
+    
+    # 1. 保存输入
+    ctx.set_step_input(step_id, data.get("fields", {}))
+    
+    # 2. 标记下游为stale（跨层级）
+    ctx.invalidate_downstream(step_id)
+    
+    # 3. 获取该步骤所需的技能列表
+    skills = SkillRegistry.get_skills_for_step(step_id)
+    
+    # 4. 执行分析（调用技能集成引擎）
+    result = AnalysisEngine.analyze(step_id, ctx, skills)
+    
+    # 5. 保存输出
+    ctx.set_step_result(step_id, result)
+    save_session(ctx)
+    
+    return jsonify({"status": "done", "output": ctx.get_step(step_id)["output"]})
+```
 
-## Step 4: 验证
-
-1. 提交L1表单 → 确认输出面板显示分析结果
-2. 返回L1修改 → 确认级联警告出现
-3. 提交下游步骤 → 确认上游数据正确汇总
-
-## Step 5: Commit
+## Step 4: Commit
 
 ```bash
-git add -A
-git commit -m "feat: output panel + cascade warning + upstream summary"
-git push origin main
+git add -A && git commit -m "feat: session management + complete API routes (19 steps)"
 ```
