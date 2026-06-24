@@ -1,205 +1,83 @@
-# Task 4: AnalyzeContext 数据模型与会话管理
+# Task 4: 三层级数据模型
+
+> **对应文档**: 框架全景图 → 第一/二/三层级数据建模
 
 **Files:**
 - Create: `app/models.py`
-- Create: `app/session.py`
 
-## Step 1: 定义数据模型 (models.py)
-
-```python
-"""华为三板斧战略分析数据模型"""
-from dataclasses import dataclass, field
-from typing import Optional
-from datetime import datetime
-import uuid
-import json
-
-
-@dataclass
-class StepInput:
-    """单步骤输入数据"""
-    fields: dict = field(default_factory=dict)  # {field_name: value}
-    
-    def to_dict(self):
-        return {"fields": self.fields}
-
-
-@dataclass
-class StepOutput:
-    """单步骤输出数据"""
-    content: str = ""          # Markdown格式分析结果
-    summary: str = ""          # 一句话摘要
-    data: dict = field(default_factory=dict)  # 结构化数据（SPAN坐标、KPI值等）
-    status: str = "pending"    # pending | analyzing | done | error
-    
-    def to_dict(self):
-        return {
-            "content": self.content,
-            "summary": self.summary,
-            "data": self.data,
-            "status": self.status
-        }
-
-
-@dataclass
-class AnalyzeContext:
-    """分析上下文——贯穿全流程的核心对象"""
-    session_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    project_name: str = "未命名项目"
-    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    
-    # 8步 + 最终报告
-    steps: dict = field(default_factory=lambda: {
-        "L1_industry": {"input": StepInput(), "output": StepOutput()},
-        "L2_customer": {"input": StepInput(), "output": StepOutput()},
-        "L3_competition": {"input": StepInput(), "output": StepOutput()},
-        "L4_internal": {"input": StepInput(), "output": StepOutput()},
-        "L5_opportunity": {"input": StepInput(), "output": StepOutput()},
-        "L6_objective": {"input": StepInput(), "output": StepOutput()},
-        "L7_strategy": {"input": StepInput(), "output": StepOutput()},
-        "L8_control": {"input": StepInput(), "output": StepOutput()},
-        "final_report": {"input": StepInput(), "output": StepOutput()},
-    })
-    
-    # 分析日志
-    log: list = field(default_factory=list)
-    
-    def get_step_input(self, step_id: str) -> StepInput:
-        return self.steps[step_id]["input"]
-    
-    def get_step_output(self, step_id: str) -> StepOutput:
-        return self.steps[step_id]["output"]
-    
-    def set_step_result(self, step_id: str, content: str, summary: str = "", data: dict = None):
-        self.steps[step_id]["output"].content = content
-        self.steps[step_id]["output"].summary = summary
-        self.steps[step_id]["output"].data = data or {}
-        self.steps[step_id]["output"].status = "done"
-    
-    def invalidate_downstream(self, from_step_id: str):
-        """标记下游步骤为需要重新计算"""
-        step_order = ["L1_industry", "L2_customer", "L3_competition", 
-                      "L4_internal", "L5_opportunity", "L6_objective",
-                      "L7_strategy", "L8_control", "final_report"]
-        start = step_order.index(from_step_id) + 1
-        for sid in step_order[start:]:
-            if self.steps[sid]["output"].status == "done":
-                self.steps[sid]["output"].status = "stale"
-                self.log.append(f"[{datetime.now().isoformat()}] {sid} marked stale due to {from_step_id} change")
-    
-    def to_dict(self):
-        return {
-            "session_id": self.session_id,
-            "project_name": self.project_name,
-            "created_at": self.created_at,
-            "steps": {
-                k: {"input": v["input"].to_dict(), "output": v["output"].to_dict()}
-                for k, v in self.steps.items()
-            },
-            "log": self.log[-50:]  # 最近50条日志
-        }
-```
-
-### Step Definitions（硬编码在模型中）
+## Step 1: 三层级枚举定义
 
 ```python
-STEP_DEFINITIONS = {
-    "L1_industry": {
-        "name": "看行业/趋势",
-        "number": 1,
-        "method": "五看 · 看行业",
-        "fields": [
-            {"id": "industry_name", "label": "行业名称", "type": "text", "required": True, "placeholder": "如：新能源汽车"},
-            {"id": "market_size", "label": "当前市场规模（亿元）", "type": "number", "required": False},
-            {"id": "growth_rate", "label": "年增长率（%）", "type": "number", "required": False},
-            {"id": "tam", "label": "TAM（总可寻址市场）", "type": "text", "required": False},
-            {"id": "key_trends", "label": "关键趋势驱动因素（每行一个）", "type": "textarea", "required": True, "placeholder": "如：\n政策推动碳中和\n电池成本持续下降\n消费者环保意识提升"},
-            {"id": "technology_trends", "label": "关键技术趋势", "type": "textarea", "required": False},
-            {"id": "additional_context", "label": "补充背景信息", "type": "textarea", "required": False, "placeholder": "任何有助于分析的上下文..."},
-        ],
-        "output_sections": ["宏观环境(PEST)", "市场格局(波特五力)", "技术趋势", "关键发现与战略启示"]
+TIER_DEFINITIONS = {
+    "tier1": {
+        "name": "五看三定",
+        "subtitle": "战略洞察 + 战略制定",
+        "timeframe": "4月-9月（7个月）",
+        "core_skills": ["sn-deep-research", "mbb-strategist"],
+        "aux_skills": ["sn-search系列", "Excel分析系列"],
+        "output": "L1 战略洞察报告",
+        "word_count": "10,000-30,000字",
     },
-    # ... L2-L8, final_report (定义在Task 5)
+    "tier2": {
+        "name": "BEM",
+        "subtitle": "战略解码",
+        "timeframe": "10月-12月（3个月）",
+        "core_skills": ["Excel分析系列", "planning-with-files"],
+        "aux_skills": [],
+        "output": "L2 战略解码方案",
+        "word_count": "5,000-10,000字",
+    },
+    "tier3": {
+        "name": "DSTE",
+        "subtitle": "全流程管理",
+        "timeframe": "1月-12月（全年循环）",
+        "core_skills": ["planning-with-files", "Excel分析系列"],
+        "aux_skills": [],
+        "output": "L3 落地执行方案",
+        "word_count": "2,000-5,000字",
+    },
 }
 ```
 
-## Step 2: 编写会话管理 (session.py)
+## Step 2: 完整步骤定义 (19步)
+
+包含: L1-L8(五看三定) + B1-B5(BEM六步法) + D1-D3(DSTE) + cross_validation + final_report
+
+每个步骤定义包含: step_id, tier, number, name, method, core_task, skills(list), usage_method, outputs(list), input_fields(list), output_sections(list)
+
+详细内容见 `app/data/step_definitions.json`（Task 6生成）。
+
+## Step 3: AnalyzeContext 数据模型
 
 ```python
-"""会话管理——内存存储，按需持久化"""
-import json
-import os
-from datetime import datetime, timedelta
-from .models import AnalyzeContext
-
-# 内存存储
-_sessions: dict = {}
-
-# 持久化路径
-INSTANCE_DIR = os.path.join(os.path.dirname(__file__), "instance")
-
-
-def get_session(session_id: str) -> AnalyzeContext:
-    """获取或创建会话"""
-    if session_id not in _sessions:
-        # 尝试从磁盘恢复
-        filepath = os.path.join(INSTANCE_DIR, f"{session_id}.json")
-        if os.path.exists(filepath):
-            with open(filepath) as f:
-                data = json.load(f)
-            ctx = _deserialize(data)
-            _sessions[session_id] = ctx
-        else:
-            return None
-    return _sessions.get(session_id)
-
-
-def create_session() -> AnalyzeContext:
-    ctx = AnalyzeContext()
-    _sessions[ctx.session_id] = ctx
-    return ctx
-
-
-def save_session(ctx: AnalyzeContext):
-    _sessions[ctx.session_id] = ctx
-    # 异步落盘
-    os.makedirs(INSTANCE_DIR, exist_ok=True)
-    filepath = os.path.join(INSTANCE_DIR, f"{ctx.session_id}.json")
-    with open(filepath, "w") as f:
-        json.dump(ctx.to_dict(), f, ensure_ascii=False, indent=2)
-
-
-def _deserialize(data: dict) -> AnalyzeContext:
-    # 从JSON恢复AnalyzeContext对象
-    from .models import StepInput, StepOutput
-    ctx = AnalyzeContext(
-        session_id=data["session_id"],
-        project_name=data.get("project_name", ""),
-        created_at=data.get("created_at", ""),
-    )
-    for sid, sdata in data.get("steps", {}).items():
-        inp = sdata.get("input", {})
-        out = sdata.get("output", {})
-        ctx.steps[sid]["input"].fields = inp.get("fields", {})
-        ctx.steps[sid]["output"].content = out.get("content", "")
-        ctx.steps[sid]["output"].summary = out.get("summary", "")
-        ctx.steps[sid]["output"].data = out.get("data", {})
-        ctx.steps[sid]["output"].status = out.get("status", "pending")
-    ctx.log = data.get("log", [])
-    return ctx
-```
-
-## Step 3: 验证模型导入
-
-```bash
-cd /c/Users/jesui/Projects/strategy-framework-system
-python -c "from app.models import AnalyzeContext, STEP_DEFINITIONS; ctx = AnalyzeContext(); print(ctx.session_id)"
+@dataclass
+class AnalyzeContext:
+    session_id: str
+    project_name: str
+    created_at: str
+    current_tier: str  # tier1/tier2/tier3
+    current_step: str
+    
+    # 三层级步骤数据
+    tier1_steps: dict  # L1-L8
+    tier2_steps: dict  # B1-B5
+    tier3_steps: dict  # D1-D3
+    cross_validation: dict
+    final_report: dict
+    
+    # DSTE日历状态
+    dste_calendar: dict  # {month: {phase, tasks, skills, outputs}}
+    
+    # 分析日志
+    log: list
+    
+    def invalidate_downstream(self, from_step_id: str):
+        """标记所有下游步骤为stale"""
+        # 跨层级级联: tier1修改→tier2 stale, tier2修改→tier3 stale
 ```
 
 ## Step 4: Commit
 
 ```bash
-git add -A
-git commit -m "feat: AnalyzeContext data model + session management"
-git push origin main
+git add -A && git commit -m "feat: three-tier data model + 19-step definitions + AnalyzeContext"
 ```
