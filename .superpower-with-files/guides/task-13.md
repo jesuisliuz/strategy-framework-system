@@ -1,132 +1,95 @@
-# Task 13: 最终报告展示页面
+# Task 13: 统一技能调用接口
+
+> **对应文档**: 二、商业分析技能全景 + 三、技能嵌入映射表
 
 **Files:**
-- Create: `app/templates/report.html`
-- Modify: `app/app.py` → 添加报告页面路由
-- Modify: `app/static/css/main.css`
+- Create: `app/skill_interface.py`
 
-## Step 1: 报告页面路由
+## Step 1: 技能调用接口定义
 
 ```python
-@app.route("/report")
-def report_page():
-    sid = request.args.get("session_id")
-    ctx = get_session(sid)
-    if not ctx:
-        return redirect("/")
+class SkillInterface:
+    """统一技能调用接口——封装所有Hermes技能的调用逻辑"""
     
-    # 检查所有步骤完成度
-    completed = sum(1 for s in ctx.steps.values() 
-                   if s["output"].status == "done")
+    SKILL_CATEGORIES = {
+        "战略框架": ["mbb-strategist"],
+        "深度研究": ["sn-deep-research", "sn-research-planning", "sn-dimension-research",
+                    "sn-research-synthesis", "sn-research-report", "sn-report-format-discovery"],
+        "搜索": ["sn-search-academic", "sn-search-code", "sn-search-social-cn", "sn-search-social-en"],
+        "文件规划": ["planning-with-files"],
+        "Excel分析": ["excel-data-analysis", "sn-da-excel-workflow", "sn-da-large-file-analysis",
+                     "excel-bar-chart-visualization", "excel-line-chart-visualization",
+                     "excel-pie-chart-data-analysis", "pivot-table-cross-analysis",
+                     "trend-analysis", "outlier-detection-and-quality-assessment",
+                     "statistical-distribution-and-outlier-analysis",
+                     "time-series-and-categorical-analysis",
+                     # 及其他30+ Excel子技能
+        ],
+    }
     
-    return render_template("report.html", 
-                          ctx=ctx, 
-                          completed=completed,
-                          total=8)
+    @staticmethod
+    def get_skill_info(skill_name: str) -> dict:
+        """获取技能详细信息"""
+        
+    @staticmethod
+    def get_step_skills(step_id: str) -> dict:
+        """获取步骤所需的技能映射（含框架和用法说明）"""
+        return STEP_SKILL_MAP.get(step_id, {})
+    
+    @staticmethod
+    def build_analysis_prompt(step_id: str, fields: dict, upstream: dict) -> str:
+        """构建包含技能调用指令的分析Prompt"""
+        mapping = STEP_SKILL_MAP.get(step_id, {})
+        skills = mapping.get("skills", [])
+        frameworks = mapping.get("mbb_frameworks", [])
+        usage = mapping.get("usage", "")
+        
+        system_prompt = SkillInterface._get_system_prompt(step_id, skills)
+        user_prompt = f"""## 分析任务
+{usage}
+
+## 输入数据
+{SkillInterface._format_fields(fields)}
+
+## 上游上下文
+{SkillInterface._format_upstream(upstream)}
+
+## 技能指令
+请依次调用以下技能完成分析：
+{SkillInterface._format_skill_chain(step_id)}
+"""
+        return system_prompt, user_prompt
+    
+    @staticmethod
+    def _get_system_prompt(step_id: str, skills: list) -> str:
+        """为每个步骤构建专属system prompt"""
+        # 根据技能映射构建角色和指令
+        
+    @staticmethod
+    def _format_skill_chain(step_id: str) -> str:
+        """格式化技能调用链"""
+        # 从4个场景调用流程中推导
 ```
 
-## Step 2: 报告页面模板 (report.html)
+## Step 2: 技能调用链生成
 
-```html
-{% extends "base.html" %}
-{% block title %}最终报告 - {{ ctx.project_name }}{% endblock %}
-
-{% block content %}
-<div class="report-page">
-    <!-- 报告状态横幅 -->
-    <div class="report-banner {% if completed >= 8 %}complete{% else %}incomplete{% endif %}">
-        <h1>📊 战略分析最终报告</h1>
-        <p>项目: {{ ctx.project_name }} | 完成度: {{ completed }}/8 步骤</p>
-    </div>
-    
-    <!-- 三级报告标签切换 -->
-    <div class="report-tabs">
-        <button class="tab active" onclick="switchTab('L1')" id="tab-L1">
-            L1 战略洞察
-        </button>
-        <button class="tab" onclick="switchTab('L2')" id="tab-L2">
-            L2 战略解码
-        </button>
-        <button class="tab" onclick="switchTab('L3')" id="tab-L3">
-            L3 落地执行
-        </button>
-    </div>
-    
-    <!-- 报告内容区 -->
-    <div class="report-content" id="report-content">
-        <div class="report-loading">
-            <div class="spinner"></div>
-            <p>正在生成报告...</p>
-        </div>
-    </div>
-    
-    <!-- 导出操作 -->
-    <div class="report-actions">
-        <button class="btn-export" onclick="copyReport()">📋 复制全文</button>
-        <button class="btn-export" onclick="downloadReport()">📥 下载 Markdown</button>
-        <a href="/" class="btn-back">← 返回分析</a>
-    </div>
-</div>
-
-<script>
-// 页面加载时获取L1报告
-fetchReport('L1');
-
-async function fetchReport(level) {
-    const sid = new URLSearchParams(window.location.search).get('session_id');
-    const resp = await fetch(`/api/report/${level}?session_id=${sid}`);
-    const data = await resp.json();
-    document.getElementById('report-content').innerHTML = 
-        `<div class="markdown-body">${marked.parse(data.content)}</div>`;
-}
-
-function switchTab(level) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-' + level).classList.add('active');
-    document.getElementById('report-content').innerHTML = 
-        '<div class="report-loading"><div class="spinner"></div><p>加载中...</p></div>';
-    fetchReport(level);
-}
-
-function downloadReport() {
-    const content = document.getElementById('report-content').innerText;
-    const blob = new Blob([content], {type: 'text/markdown'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '战略分析报告.md';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-</script>
-{% endblock %}
+```python
+@staticmethod
+def get_call_chain(step_id: str) -> list:
+    """获取步骤的技能调用链（有序）"""
+    # 例如 L1_industry:
+    # 1. sn-deep-research (初始化研究)
+    # 2. sn-research-planning (生成plan.json)
+    # 3. sn-dimension-research (行业维度取证)
+    #    → sn-search-academic (学术论文)
+    #    → sn-search-social-cn/en (用户口碑)
+    # 4. mbb-strategist(Industry Trends, PESTEL)
+    # 5. sn-research-synthesis (综合判断)
+    # 6. sn-research-report (生成子报告)
 ```
 
-## Step 3: 引入 Markdown 渲染
-
-在 base.html 的 head 中添加：
-```html
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-```
-
-## Step 4: 报告页面CSS
-
-- `.report-banner`: 渐变背景，完成/未完成两种颜色
-- `.report-tabs`: 标签页切换，Active标签有金色底部边框
-- `.report-content`: 最大宽度900px，居中，Markdown正文样式
-- `.report-actions`: 固定在底部
-
-## Step 5: 验证
-
-1. 启动应用，完成至少前5步
-2. 点击步骤导航条的"最终报告"按钮
-3. 验证L1/L2/L3标签切换正常
-4. 验证下载按钮生成 .md 文件
-
-## Step 6: Commit
+## Step 3: Commit
 
 ```bash
-git add -A
-git commit -m "feat: final report page with L1/L2/L3 tabs + markdown rendering"
-git push origin main
+git add -A && git commit -m "feat: unified skill interface + call chain generation for all 19 steps"
 ```
