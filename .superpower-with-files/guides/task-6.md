@@ -1,113 +1,75 @@
-# Task 6: 基础布局与步骤导航条
+# Task 6: 19步完整定义与输入字段
+
+> **对应文档**: 三、技能嵌入映射表 + 四、三级报告模板
 
 **Files:**
-- Modify: `app/templates/base.html`
-- Create: `app/templates/step.html`
-- Modify: `app/static/css/main.css`
+- Create: `app/data/step_definitions.json`
+- Modify: `app/models.py` → 补全 `ALL_STEPS` 定义
 
-## Step 1: 完善 base.html 布局
+## Step 1: 19步定义JSON (step_definitions.json)
 
-```html
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}华为三板斧战略分析系统{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-</head>
-<body>
-    <div class="app-container">
-        <!-- 顶部导航栏 -->
-        <header class="top-bar">
-            <div class="logo">
-                <span class="logo-icon">⚔️</span>
-                <span class="logo-text">战略分析工作台</span>
-            </div>
-            <div class="project-name" id="project-name-display">
-                {% if project_name %}{{ project_name }}{% endif %}
-            </div>
-        </header>
-        
-        <!-- 步骤导航条 -->
-        <nav class="step-nav" id="step-navigation">
-            {% block step_nav %}{% endblock %}
-        </nav>
-        
-        <!-- 主内容区 -->
-        <main class="main-content">
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-    
-    <script src="/static/js/app.js"></script>
-</body>
-</html>
+```json
+{
+  "steps": [
+    {
+      "step_id": "L1_industry",
+      "tier": "tier1",
+      "number": 1,
+      "name": "看行业/趋势",
+      "method": "五看 · 看行业",
+      "core_task": "行业趋势分析、价值转移识别",
+      "chapter_in_report": "二、看行业/趋势（3,000-5,000字）",
+      "fields": [
+        {"id": "industry_name", "label": "行业名称", "type": "text", "required": true},
+        {"id": "market_size", "label": "当前市场规模（亿元）", "type": "number"},
+        {"id": "growth_rate", "label": "年增长率（%）", "type": "number"},
+        {"id": "tam", "label": "TAM（总可寻址市场）", "type": "text"},
+        {"id": "key_trends", "label": "关键趋势驱动因素", "type": "textarea", "required": true},
+        {"id": "technology_trends", "label": "关键技术趋势", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    // ... L2-L8 (五看三定全部8步)
+    {
+      "step_id": "B1_csf",
+      "tier": "tier2",
+      "number": 9,
+      "name": "CSF导出",
+      "method": "BEM · 关键成功因素",
+      "core_task": "关键成功因素识别",
+      "chapter_in_report": "二、CSF导出（1,000字）",
+      "fields": [
+        {"id": "strategic_objectives", "label": "战略目标（从L6导入）", "type": "imported", "source": "L6_objective"},
+        {"id": "csf_candidates", "label": "候选CSF列表（每行一个）", "type": "textarea", "required": true},
+        {"id": "mapping_note", "label": "CSF与战略目标映射说明", "type": "textarea"}
+      ]
+    },
+    // ... B2-B5 (BEM六步法)
+    // ... D1-D3 (DSTE)
+    // ... cross_validation, final_report
+  ]
+}
 ```
 
-## Step 2: 创建步骤导航条组件（macros.html 或直接嵌入）
+## Step 2: 输入字段类型系统
 
-```html
-<div class="step-progress">
-    {% set steps = [
-        ('L1_industry', '1', '看行业'),
-        ('L2_customer', '2', '看客户'),
-        ('L3_competition', '3', '看竞争'),
-        ('L4_internal', '4', '看自己'),
-        ('L5_opportunity', '5', '看机会'),
-        ('L6_objective', '6', '定目标'),
-        ('L7_strategy', '7', '定策略'),
-        ('L8_control', '8', '定控制点'),
-        ('final_report', '📊', '最终报告'),
-    ] %}
-    
-    {% for step_id, num, label in steps %}
-    <a href="/step/{{ step_id }}?session_id={{ session_id }}"
-       class="step-item {% if step_id == current_step %}active{% elif steps_status[step_id] == 'done' %}done{% elif steps_status[step_id] == 'stale' %}stale{% endif %}"
-       id="nav-{{ step_id }}">
-        <span class="step-num">{{ num }}</span>
-        <span class="step-label">{{ label }}</span>
-        {% if steps_status[step_id] == 'done' %}
-        <span class="step-check">✓</span>
-        {% elif steps_status[step_id] == 'analyzing' %}
-        <span class="step-spinner"></span>
-        {% endif %}
-    </a>
-    {% endfor %}
-</div>
+支持的字段类型: text, number, textarea, imported(从上游自动填充), file(Excel上传), select(下拉)
+
+## Step 3: 在models.py中加载定义
+
+```python
+import json, os
+
+def load_step_definitions():
+    path = os.path.join(os.path.dirname(__file__), "data", "step_definitions.json")
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)["steps"]
+
+ALL_STEPS = load_step_definitions()
 ```
 
-## Step 3: 创建 step.html（单步骤页面模板）
-
-布局：
-- 继承 base.html
-- 左侧面板（30%宽）：输入表单
-- 中间面板（70%宽）：输出展示 + 上游数据折叠卡片
-- 响应式：小屏幕上下堆叠
-
-## Step 4: 完善 main.css 导航样式
-
-- `.step-nav`: flex布局，水平滚动
-- `.step-item`: 连接线效果，hover/active/done/stale 四态
-- Done = 绿色对勾，Active = 金色边框，Stale = 橙色虚线警告
-
-## Step 5: 验证
+## Step 4: Commit
 
 ```bash
-# 启动Flask
-python app/app.py &
-sleep 2
-# 验证首页
-curl -s http://localhost:5000/ | grep "战略分析工作台"
-# 验证步骤页
-curl -s http://localhost:5000/step/L1_industry | grep "看行业"
-```
-
-## Step 6: Commit
-
-```bash
-git add -A
-git commit -m "feat: step navigation bar + step page layout"
-git push origin main
+git add -A && git commit -m "feat: complete 19-step definitions JSON with fields per spec"
 ```
