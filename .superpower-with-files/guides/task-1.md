@@ -9,7 +9,7 @@
 ## Step 1: 创建目录结构
 
 ```bash
-mkdir -p app/templates app/static/css app/static/js
+mkdir -p app/templates app/static/css app/static/js app/data
 touch app/__init__.py
 ```
 
@@ -34,50 +34,28 @@ SECRET_KEY=change-me-to-random-string
 ## Step 4: 编写 .gitignore
 
 ```
-# 环境与密钥
 .env
 credentials/
 *.pem
 *.key
-
-# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
-
-# IDE
 .vscode/
 .idea/
-
-# 运行态
 app/instance/
 *.db
 *.sqlite
-
-# 上传
 uploads/
-
-# Superpowers
 .superpower-with-files/progress.md
 .superpower-with-files/handoff.md
-
-# 系统
 .DS_Store
 Thumbs.db
 ```
 
-## Step 5: 验证
+## Step 5: Commit
 
 ```bash
-ls -R app/
-cat .gitignore | head -5
-```
-
-## Step 6: Commit
-
-```bash
-git add -A
-git commit -m "feat: project skeleton — dirs, config, .gitignore"
-git push origin main
+git add -A && git commit -m "feat: project skeleton — dirs, config, .gitignore"
 ```
