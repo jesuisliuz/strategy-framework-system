@@ -1,155 +1,181 @@
-# Task 5: 步骤定义引擎与API路由
+# Task 5: 技能注册表与映射引擎
+
+> **对应文档**: 三、技能嵌入映射表（核心） — 每步→技能→使用方法→输出物
 
 **Files:**
-- Modify: `app/models.py` → 补全 STEP_DEFINITIONS
-- Modify: `app/app.py` → 添加路由
-- Create: `app/steps.py`
+- Create: `app/skill_registry.py`
 
-## Step 1: 补全 STEP_DEFINITIONS（完整八步+最终报告定义）
-
-在 `app/models.py` 中补全，包含以下结构：
-
-```
-L1_industry:   看行业/趋势    → fields: 行业名称/市场规模/增长率/TAM/趋势驱动/技术趋势
-L2_customer:   看客户        → fields: 目标客群描述/购买动因/$APPEALS评分/未满足需求
-L3_competition: 看竞争       → fields: 竞对名称/市场份额/优劣势/战略集团参数
-L4_internal:   看自己        → fields: 资源清单/核心能力自评/组织健康度
-L5_opportunity: 看机会       → fields: 机会列表/市场吸引力/竞争力评估/SPAN象限数据
-L6_objective:  定目标        → fields: 战略意图/Vision/KPI基线/目标差距
-L7_strategy:   定策略        → fields: 业务设计/创新焦点/关键任务/资源分配
-L8_control:    定控制点      → fields: 护城河类型/控制强度/风险场景/Plan B
-final_report:  最终报告      → 聚合所有步骤，生成三级报告
-```
-
-每个步骤定义包含：
-- `name`: 中文名称
-- `number`: 步骤序号 1-9
-- `method`: 方法论标注（五看/三定/DSTE）
-- `fields`: 输入字段列表 [{id, label, type, required, placeholder}]
-- `output_sections`: 输出区块标题列表
-
-## Step 2: 创建步骤处理引擎 (steps.py)
+## Step 1: 技能清单定义 (完整技能目录)
 
 ```python
-"""步骤分析引擎——将输入转化为分析输出"""
-from .models import AnalyzeContext, STEP_DEFINITIONS
-
-
-class StepEngine:
-    """负责单个步骤的分析逻辑"""
-    
-    @staticmethod
-    def analyze(step_id: str, ctx: AnalyzeContext) -> str:
-        """分析单个步骤，返回Markdown结果"""
-        step_def = STEP_DEFINITIONS.get(step_id, {})
-        step_input = ctx.get_step_input(step_id)
-        upstream = StepEngine._gather_upstream(step_id, ctx)
-        
-        # 构建分析prompt（各步骤自定义）
-        prompt = StepEngine._build_prompt(step_id, step_def, step_input, upstream)
-        
-        # 模拟分析结果（Phase 4替换为真实LLM调用）
-        result = StepEngine._mock_analyze(step_id, step_input.fields)
-        
-        return result
-    
-    @staticmethod
-    def _gather_upstream(step_id: str, ctx: AnalyzeContext) -> dict:
-        """收集上游已完成步骤的输出摘要"""
-        # 按步骤顺序收集
-        pass
-    
-    @staticmethod
-    def _build_prompt(step_id, step_def, step_input, upstream) -> str:
-        """构建分析提示词"""
-        pass
-    
-    @staticmethod
-    def _mock_analyze(step_id: str, fields: dict) -> str:
-        """临时mock——返回结构化占位分析结果"""
-        step_name = STEP_DEFINITIONS.get(step_id, {}).get("name", step_id)
-        return f"## {step_name}\n\n*分析引擎就绪，等待LLM接入...*\n\n已接收输入字段: {list(fields.keys())}\n"
+SKILL_INVENTORY = {
+    # === 战略框架 ===
+    "mbb-strategist": {
+        "category": "战略框架",
+        "capabilities": ["SWOT", "PESTEL", "Porter's Five Forces", "Value Chain", 
+                        "Blue Ocean", "GTM Strategy", "Pricing Strategy", "Risk & Scenario",
+                        "Financial Modeling", "Executive Synthesis", "Industry Trends",
+                        "Customer Journey", "Personas"],
+        "priority": 2,
+    },
+    # === 深度研究 ===
+    "sn-deep-research": {
+        "category": "深度研究",
+        "capabilities": ["规划→取证→综合→成稿全流程编排"],
+        "sub_skills": ["sn-research-planning", "sn-dimension-research", 
+                       "sn-research-synthesis", "sn-research-report", 
+                       "sn-report-format-discovery"],
+        "priority": 1,
+    },
+    # === 搜索系列 ===
+    "sn-search-academic": {"category": "研究子技能", "capabilities": ["ArXiv", "Semantic Scholar", "PubMed"], "priority": 1},
+    "sn-search-code": {"category": "研究子技能", "capabilities": ["GitHub", "Stack Overflow"], "priority": 1},
+    "sn-search-social-cn": {"category": "研究子技能", "capabilities": ["B站", "知乎", "抖音"], "priority": 1},
+    "sn-search-social-en": {"category": "研究子技能", "capabilities": ["Reddit", "Twitter", "YouTube"], "priority": 1},
+    # === 文件规划 ===
+    "planning-with-files": {
+        "category": "文件规划",
+        "capabilities": ["task_plan.md", "findings.md", "progress.md"],
+        "priority": 4,
+    },
+    # === Excel分析 (30+技能) ===
+    "excel-data-analysis": {"category": "Excel分析", "capabilities": ["数据清洗", "分类统计", "条件过滤", "KPI体系设计"], "priority": 3},
+    "excel-bar-chart-visualization": {"category": "Excel分析", "capabilities": ["柱状图"], "priority": 3},
+    "excel-line-chart-visualization": {"category": "Excel分析", "capabilities": ["折线图"], "priority": 3},
+    "excel-pie-chart-data-analysis": {"category": "Excel分析", "capabilities": ["饼图"], "priority": 3},
+    "pivot-table-cross-analysis": {"category": "Excel分析", "capabilities": ["透视表"], "priority": 3},
+    "trend-analysis": {"category": "Excel分析", "capabilities": ["趋势分析"], "priority": 3},
+    "outlier-detection-and-quality-assessment": {"category": "Excel分析", "capabilities": ["异常值检测"], "priority": 3},
+    "statistical-distribution-and-outlier-analysis": {"category": "Excel分析", "capabilities": ["统计分布"], "priority": 3},
+    "time-series-and-categorical-analysis": {"category": "Excel分析", "capabilities": ["时间序列"], "priority": 3},
+    # (及其他30+ Excel技能)
+}
 ```
 
-## Step 3: 添加API路由 (app.py)
+## Step 2: 技能映射表
 
 ```python
-# === 新增导入 ===
-from flask import request, jsonify, session as flask_session
-from app.models import AnalyzeContext, STEP_DEFINITIONS
-from app.session import get_session, create_session, save_session
-from app.steps import StepEngine
-
-# === 新增路由 ===
-
-@app.route("/api/session/start", methods=["POST"])
-def start_session():
-    ctx = create_session()
-    save_session(ctx)
-    return jsonify({"session_id": ctx.session_id})
-
-@app.route("/api/step/<step_id>", methods=["GET"])
-def get_step(step_id):
-    sid = request.args.get("session_id")
-    ctx = get_session(sid)
-    if not ctx:
-        return jsonify({"error": "Session not found"}), 404
-    step_def = STEP_DEFINITIONS.get(step_id)
-    step_data = ctx.steps.get(step_id)
-    return jsonify({
-        "definition": step_def,
-        "input": step_data["input"].to_dict() if step_data else {},
-        "output": step_data["output"].to_dict() if step_data else {},
-    })
-
-@app.route("/api/step/<step_id>/save", methods=["POST"])
-def save_step_input(step_id):
-    data = request.get_json()
-    sid = data.get("session_id")
-    ctx = get_session(sid)
-    if not ctx:
-        return jsonify({"error": "Session not found"}), 404
-    
-    # 保存输入
-    ctx.steps[step_id]["input"].fields = data.get("fields", {})
-    
-    # 标记下游为 stale
-    ctx.invalidate_downstream(step_id)
-    
-    # 执行当前步骤分析
-    result = StepEngine.analyze(step_id, ctx)
-    ctx.set_step_result(step_id, result, summary=result[:100])
-    
-    save_session(ctx)
-    return jsonify({"status": "ok", "step": ctx.steps[step_id]["output"].to_dict()})
-
-@app.route("/api/context/<session_id>", methods=["GET"])
-def get_context(session_id):
-    ctx = get_session(session_id)
-    if not ctx:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify(ctx.to_dict())
+STEP_SKILL_MAP = {
+    # Tier1: 五看三定
+    "L1_industry": {
+        "skills": ["mbb-strategist", "sn-deep-research", "sn-search-academic"],
+        "mbb_frameworks": ["Industry Trends", "PESTEL"],
+        "usage": "用MBB的Industry Trends框架分析行业趋势；用sn-deep-research做深度行业研究；用sn-search-academic搜索学术论文验证趋势",
+        "outputs": ["行业趋势报告", "价值转移分析图"],
+    },
+    "L2_customer": {
+        "skills": ["mbb-strategist", "sn-deep-research", "sn-search-social-cn", "sn-search-social-en"],
+        "mbb_frameworks": ["Customer Journey", "Personas"],
+        "usage": "用MBB的Customer Journey分析客户购买行为；用Personas做用户画像；用sn-search-social搜索用户口碑",
+        "outputs": ["客户细分报告", "市场交易地图"],
+    },
+    "L3_competition": {
+        "skills": ["mbb-strategist", "sn-deep-research", "sn-search-code"],
+        "mbb_frameworks": ["SWOT", "Porter's Five Forces"],
+        "usage": "用SWOT分析自身与竞品；用Porter's Five Forces分析竞争格局；用sn-search-code搜索竞品技术信息",
+        "outputs": ["竞争格局报告", "竞品对比矩阵"],
+    },
+    "L4_internal": {
+        "skills": ["mbb-strategist", "excel-data-analysis"],
+        "mbb_frameworks": ["SWOT"],
+        "usage": "用SWOT分析自身优势劣势；用Excel分析内部运营数据",
+        "outputs": ["能力评估报告"],
+    },
+    "L5_opportunity": {
+        "skills": ["mbb-strategist", "excel-bar-chart-visualization"],
+        "mbb_frameworks": ["Risk & Scenario"],
+        "usage": "用Risk & Scenario分析机会风险；用Excel绘制SPAN矩阵",
+        "outputs": ["SPAN机会矩阵"],
+    },
+    "L6_objective": {
+        "skills": ["mbb-strategist"],
+        "mbb_frameworks": ["Executive Synthesis"],
+        "usage": "用Executive Synthesis提炼战略目标",
+        "outputs": ["战略目标清单"],
+    },
+    "L7_strategy": {
+        "skills": ["mbb-strategist"],
+        "mbb_frameworks": ["GTM Strategy", "Pricing Strategy"],
+        "usage": "用GTM设计市场进入策略；用Pricing Strategy设计定价策略",
+        "outputs": ["策略路线图"],
+    },
+    "L8_control": {
+        "skills": ["mbb-strategist"],
+        "mbb_frameworks": ["SWOT", "Porter's"],
+        "usage": "用SWOT和Porter's分析护城河",
+        "outputs": ["战略控制点清单"],
+    },
+    # Tier2: BEM六步法
+    "B1_csf": {
+        "skills": ["mbb-strategist"],
+        "mbb_frameworks": ["Executive Synthesis"],
+        "usage": "用Executive Synthesis提炼CSF",
+        "outputs": ["CSF清单"],
+    },
+    "B2_kpi": {
+        "skills": ["excel-data-analysis", "excel-threshold-analysis-and-styling"],
+        "usage": "用Excel设计KPI体系；用阈值分析设定KPI目标值",
+        "outputs": ["KPI体系表"],
+    },
+    "B3_ctq": {
+        "skills": ["excel-outlier-detection-and-quality-assessment"],
+        "usage": "用异常值检测识别关键品质点",
+        "outputs": ["CTQ-Y清单"],
+    },
+    "B4_keytasks": {
+        "skills": ["planning-with-files"],
+        "usage": "用文件化规划分解重点工作",
+        "outputs": ["重点工作分解表"],
+    },
+    "B5_pbc": {
+        "skills": ["excel-data-analysis"],
+        "usage": "用Excel设计PBC模板",
+        "outputs": ["PBC模板"],
+    },
+    # Tier3: DSTE
+    "D1_execution": {
+        "skills": ["planning-with-files", "excel-line-chart-visualization"],
+        "usage": "用文件化规划跟踪进度；用折线图可视化进度",
+        "outputs": ["执行进度报告"],
+    },
+    "D2_analysis": {
+        "skills": ["excel-trend-analysis", "statistical-distribution-and-outlier-analysis"],
+        "usage": "用趋势分析识别偏差；用异常检测发现异常",
+        "outputs": ["偏差分析报告"],
+    },
+    "D3_review": {
+        "skills": ["sn-research-synthesis"],
+        "usage": "用综合判断提炼复盘结论",
+        "outputs": ["战略复盘报告"],
+    },
+    # 验证
+    "cross_validation": {
+        "skills": ["sn-research-synthesis", "mbb-strategist"],
+        "usage": "横向行业对齐+纵向时间推演验证",
+        "outputs": ["验证报告"],
+    },
+}
 ```
 
-## Step 4: 更新主页路由支持会话
+## Step 3: SkillRegistry 类
 
-修改 index 路由，创建默认会话并重定向到步骤1。
-
-## Step 5: 验证
-
-```bash
-cd /c/Users/jesui/Projects/strategy-framework-system
-python -c "
-from app.models import STEP_DEFINITIONS
-for k, v in STEP_DEFINITIONS.items():
-    print(f'{k}: {v[\"name\"]} — {len(v[\"fields\"])} fields, {len(v.get(\"output_sections\",[]))} sections')
-"
+```python
+class SkillRegistry:
+    @staticmethod
+    def get_skills_for_step(step_id: str) -> list:
+        """获取步骤需要的技能列表"""
+        
+    @staticmethod
+    def get_priority(skill_name: str) -> int:
+        """获取技能调用优先级"""
+        
+    @staticmethod
+    def get_all_skills_by_category() -> dict:
+        """按类别分组获取所有技能——用于前端可视化"""
 ```
 
-## Step 6: Commit
+## Step 4: Commit
 
 ```bash
-git add -A
-git commit -m "feat: step definitions + API routes + mock engine"
-git push origin main
+git add -A && git commit -m "feat: skill registry + step-skill mapping (matching user spec)"
 ```
