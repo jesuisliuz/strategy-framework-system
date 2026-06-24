@@ -1,110 +1,83 @@
-# Task 14: VPS环境准备与Docker部署
+# Task 14: 五看分析引擎 (L1-L5)
+
+> **对应文档**: 三、技能嵌入映射表 — 第一层级：五看三定
 
 **Files:**
-- Modify: `docker-compose.yml` （增加生产环境配置）
+- Create: `app/engines/tier1_five_looks.py`
 
-**WARNING:** 严格遵循 `docker-compose-python-deployment` skill的所有规则。目标VPS：117.50.157.11 (Debian 12, 4GB RAM)
+## Step 1: 5步分析函数
 
-## Step 1: VPS环境检查
+```python
+def analyze_L1_industry(fields, upstream, skill_interface):
+    """看行业/趋势 — Industry Trends + PESTEL + Deep Research"""
+    # 1. 调用 mbb-strategist(Industry Trends)
+    # 2. 调用 mbb-strategist(PESTEL)
+    # 3. 调用 sn-deep-research (行业维度)
+    # 4. 调用 sn-search-academic (学术验证)
+    # 输出: 行业趋势报告 + 价值转移分析图
 
-通过SSH连接，验证：
-```bash
-ssh -i ~/.ssh/xinnet-vps root@117.50.157.11 "
-    echo '=== OS ===' && cat /etc/os-release | head -3
-    echo '=== Docker ===' && docker --version && docker compose version
-    echo '=== Disk ===' && df -h /
-    echo '=== RAM ===' && free -h
-    echo '=== DNS ===' && python3 -c 'import socket; socket.getaddrinfo(\"pypi.tuna.tsinghua.edu.cn\", 443)' 2>&1 | head -1
-"
+def analyze_L2_customer(fields, upstream, skill_interface):
+    """看客户 — Customer Journey + Personas + Social Search"""
+    # 1. mbb-strategist(Customer Journey)
+    # 2. mbb-strategist(Personas)
+    # 3. sn-deep-research (客户维度)
+    # 4. sn-search-social-cn/en (用户口碑)
+    # 输出: 客户细分报告 + 市场交易地图
+
+def analyze_L3_competition(fields, upstream, skill_interface):
+    """看竞争 — SWOT + Porter's Five Forces + Code Search"""
+    # 1. mbb-strategist(SWOT)
+    # 2. mbb-strategist(Porter's Five Forces)
+    # 3. sn-deep-research (竞品维度)
+    # 4. sn-search-code (竞品技术)
+    # 输出: 竞争格局报告 + 竞品对比矩阵
+
+def analyze_L4_internal(fields, upstream, skill_interface):
+    """看自己 — SWOT + Excel数据分析"""
+    # 1. mbb-strategist(SWOT)
+    # 2. excel-data-analysis (内部数据)
+    # 输出: 能力评估报告
+
+def analyze_L5_opportunity(fields, upstream, skill_interface):
+    """看机会 — Risk & Scenario + SPAN矩阵可视化"""
+    # 1. mbb-strategist(Risk & Scenario)
+    # 2. excel-bar-chart-visualization (SPAN矩阵)
+    # 输出: SPAN机会矩阵
 ```
 
-## Step 2: 上传项目文件
+## Step 2: 每个函数返回结构化结果
 
-使用 rsync 或 scp（排除 .git 和 .superpower-with-files）：
-```bash
-# 打包
-cd /c/Users/jesui/Projects/strategy-framework-system
-tar --exclude='.git' --exclude='.superpower-with-files' --exclude='__pycache__' \
-    -czf /tmp/strategy-deploy.tar.gz .
-
-# 上传
-scp -i ~/.ssh/xinnet-vps /tmp/strategy-deploy.tar.gz root@117.50.157.11:/opt/
-
-# VPS上解压
-ssh -i ~/.ssh/xinnet-vps root@117.50.157.11 "
-    mkdir -p /opt/strategy-framework && cd /opt/strategy-framework
-    tar xzf /opt/strategy-deploy.tar.gz
-    ls -la
-"
-```
-
-## Step 3: 配置 .env（在VPS上创建）
-
-```bash
-ssh -i ~/.ssh/xinnet-vps root@117.50.157.11 "
-cd /opt/strategy-framework
-cat > .env << 'ENVEOF'
-SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
-ANALYSIS_LLM_API_KEY=your_real_key_here
-ANALYSIS_LLM_BASE_URL=https://api.openai.com/v1
-ANALYSIS_LLM_MODEL=gpt-4o
-ENVEOF
-chmod 600 .env
-"
-```
-
-## Step 4: Docker构建与启动
-
-在VPS上：
-```bash
-ssh -i ~/.ssh/xinnet-vps root@117.50.157.11 "
-cd /opt/strategy-framework
-# 配置Docker镜像加速器（中国VPS必需）
-mkdir -p /etc/docker
-cat > /etc/docker/daemon.json << 'EOF'
+```python
 {
-  \"registry-mirrors\": [
-    \"https://mirror.ccs.tencentyun.com\",
-    \"https://docker.m.daocloud.io\"
-  ]
+    "content": "# Markdown分析内容...",
+    "summary": "一句话摘要",
+    "artifacts": ["行业趋势报告", "价值转移分析图"],
+    "skills_used": ["mbb-strategist(Industry Trends)", "sn-deep-research"],
+    "data": {}  # 结构化数据供下游使用
 }
-EOF
-systemctl restart docker
-
-# 构建（使用清华PyPI镜像加速pip）
-docker compose build --build-arg PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 启动
-docker compose up -d
-
-# 等待就绪
-sleep 5
-docker compose ps
-"
 ```
 
-## Step 5: 验证部署
+## Step 3: 注册到AnalysisEngine
+
+```python
+# app/engines/__init__.py
+ANALYZERS = {
+    "L1_industry": analyze_L1_industry,
+    "L2_customer": analyze_L2_customer,
+    # ...
+}
+
+class AnalysisEngine:
+    @staticmethod
+    def analyze(step_id, ctx, skills):
+        analyzer = ANALYZERS.get(step_id)
+        if not analyzer:
+            return mock_analyze(step_id, ctx)
+        return analyzer(ctx.get_step_input(step_id), upstream_data, SkillInterface)
+```
+
+## Step 4: Commit
 
 ```bash
-# 本地验证VPS上的服务
-curl -s http://117.50.157.11/ | grep "战略分析工作台"
-# 预期输出包含"战略分析工作台"
+git add -A && git commit -m "feat: five-looks analysis engine (L1-L5) with skill integration"
 ```
-
-## Step 6: Pitfall检查清单
-
-- [ ] 使用 `python:3.11-slim` 而非 3.12-slim（pitfall #2）
-- [ ] 使用 `python app/app.py` 而非 gunicorn（确保 init 逻辑执行）
-- [ ] 健康检查用 Python 而非 curl（pitfall #12）
-- [ ] Docker daemon.json 配置了国内镜像加速
-- [ ] pip 使用清华镜像
-- [ ] `.env` 未提交到Git
-- [ ] 只监听 127.0.0.1:5000，通过Nginx暴露
-
-## Step 7: 无Git操作（部署不需要Git）
-
-部署文件通过 scp 传输，VPS上不做 git clone（避免暴露GitHub凭据）。源码版本管理通过本地推送GitHub完成。
-
----
-
-*注意：此步骤需要真实API密钥。部署前确保 `.env` 中的 `ANALYSIS_LLM_API_KEY` 已配置。*
