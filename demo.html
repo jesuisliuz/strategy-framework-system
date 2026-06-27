@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华为三板斧战略分析系统 — 高保真演示</title>
+<style>
+/* === Design Tokens (from DESIGN.md) === */
+:root {
+  /* Colors */
+  --primary: #1a2744;
+  --primary-light: #2a3a5c;
+  --primary-dark: #0f1a33;
+  --secondary: #d4a017;
+  --secondary-light: #e8b830;
+  --secondary-dark: #b8860b;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-dark: #1a2744;
+  --text-primary: #1a2744;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  --text-inverse: #ffffff;
+  --text-accent: #d4a017;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
+
+  /* Typography */
+  --font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+
+  /* Layout */
+  --sidebar-width: 320px;
+  --header-height: 64px;
+  --content-padding: 24px;
+  --card-padding: 16px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+
+  /* Shapes */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-width: 1px;
+  --border-color: #e9ecef;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  line-height: 1.5;
+}
+
+/* === Header === */
+.header {
+  height: var(--header-height);
+  background: var(--bg-dark);
+  color: var(--text-inverse);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--content-padding);
+  box-shadow: var(--shadow-md);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-brand .logo {
+  width: 36px;
+  height: 36px;
+  background: var(--secondary);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.header-brand .title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.header-brand .subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.header-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.header-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  transition: all 0.2s;
+}
+
+.header-nav a:hover, .header-nav a.active {
+  color: var(--text-inverse);
+  background: var(--primary-light);
+}
+
+/* === Tier Navigation Bar === */
+.tier-nav {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: var(--bg-primary);
+  border-bottom: var(--border-width) solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--content-padding);
+  gap: 8px;
+  z-index: 99;
+}
+
+.tier-badge {
+  padding: 6px 16px;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tier-badge.tier1 { background: var(--primary); color: var(--text-inverse); }
+.tier-badge.tier2 { background: var(--secondary); color: var(--text-inverse); }
+.tier-badge.tier3 { background: var(--info); color: var(--text-inverse); }
+.tier-badge.validation { background: var(--bg-tertiary); color: var(--text-primary); }
+
+.tier-badge:hover { opacity: 0.9; transform: translateY(-1px); }
+.tier-badge.active { box-shadow: var(--shadow-md); }
+
+.tier-progress {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* === Main Layout === */
+.main {
+  margin-top: calc(var(--header-height) + 48px);
+  display: flex;
+  min-height: calc(100vh - var(--header-height) - 48px);
+}
+
+/* === Sidebar (Input Panel) === */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-primary);
+  border-right: var(--border-width) solid var(--border-color);
+  padding: var(--content-padding);
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--gap-md);
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step-item {
+  padding: 10px 12px;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+}
+
+.step-item:hover { background: var(--bg-secondary); }
+.step-item.active { background: var(--primary); color: var(--text-inverse); }
+.step-item.done { color: var(--success); }
+.step-item.stale { color: var(--warning); }
+
+.step-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.step-status.pending { background: var(--bg-tertiary); }
+.step-status.running { background: var(--info); }
+.step-status.done { background: var(--success); }
+.step-status.stale { background: var(--warning); }
+.step-status.error { background: var(--danger); }
+
+/* === Content Area === */
+.content {
+  flex: 1;
+  padding: var(--content-padding);
+  overflow-y: auto;
+}
+
+/* === Step Form === */
+.step-form {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--gap-lg);
+}
+
+.step-form-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.step-form-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--gap-lg);
+}
+
+.form-group {
+  margin-bottom: var(--gap-md);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  background: var(--bg-primary);
+  transition: all 0.2s;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,39,68,0.1);
+}
+
+.form-textarea { min-height: 100px; resize: vertical; }
+
+.form-required {
+  color: var(--danger);
+  margin-left: 4px;
+}
+
+/* === Output Panel === */
+.output-panel {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--gap-lg);
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gap-md);
+}
+
+.output-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.output-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary { background: var(--primary); color: var(--text-inverse); }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: var(--border-width) solid var(--border-color); }
+.btn-secondary:hover { background: var(--bg-tertiary); }
+.btn-accent { background: var(--secondary); color: var(--text-inverse); }
+.btn-accent:hover { background: var(--secondary-light); }
+
+.output-content {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
+.output-content h3 {
+  font-size: var(--font-size-lg);
+  margin: var(--gap-md) 0 var(--gap-sm);
+  color: var(--text-primary);
+}
+
+.output-content ul {
+  padding-left: 20px;
+  margin: var(--gap-sm) 0;
+}
+
+.output-content li {
+  margin-bottom: 4px;
+}
+
+/* === Status Badges === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.status-badge.pending { background: var(--bg-tertiary); color: var(--text-secondary); }
+.status-badge.running { background: var(--info); color: var(--text-inverse); }
+.status-badge.done { background: var(--success); color: var(--text-inverse); }
+.status-badge.stale { background: var(--warning); color: var(--text-primary); }
+.status-badge.error { background: var(--danger); color: var(--text-inverse); }
+
+/* === Skills Panel === */
+.skills-panel {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--gap-lg);
+}
+
+.skills-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--gap-md);
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skill-tag {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.skill-tag.primary { background: var(--primary); color: var(--text-inverse); }
+.skill-tag.secondary { background: var(--secondary); color: var(--text-inverse); }
+
+/* === DSTE Calendar === */
+.dste-calendar {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--card-padding);
+  box-shadow: var(--shadow-sm);
+}
+
+.dste-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: var(--gap-md);
+}
+
+.dste-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
+
+.dste-month {
+  padding: 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dste-month:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.dste-month .month-num {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.dste-month .phase {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.dste-month .tasks {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.dste-month.启动 { background: var(--info); color: var(--text-inverse); }
+.dste-month.五看 { background: var(--primary); color: var(--text-inverse); }
+.dste-month.三定 { background: var(--secondary); color: var(--text-inverse); }
+.dste-month.评审 { background: var(--success); color: var(--text-inverse); }
+.dste-month.解码 { background: var(--warning); color: var(--text-primary); }
+.dste-month.预算 { background: var(--danger); color: var(--text-inverse); }
+.dste-month.执行 { background: var(--primary-light); color: var(--text-inverse); }
+.dste-month.复盘 { background: var(--text-secondary); color: var(--text-inverse); }
+
+/* === Footer === */
+.footer {
+  background: var(--bg-dark);
+  color: var(--text-muted);
+  padding: 16px var(--content-padding);
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .sidebar { width: 280px; }
+  .dste-grid { grid-template-columns: repeat(6, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-brand">
+    <div class="logo">S</div>
+    <div class="title">华为三板斧战略分析系统</div>
+    <div class="subtitle">ToB SaaS · 五看三定 · BEM · DSTE</div>
+  </div>
+  <nav class="header-nav">
+    <a href="#" class="active">工作台</a>
+    <a href="#">报告</a>
+    <a href="#">指南</a>
+    <a href="#">设置</a>
+  </nav>
+</header>
+
+<!-- Tier Navigation -->
+<nav class="tier-nav">
+  <div class="tier-badge tier1 active">Tier1 · 五看三定</div>
+  <div class="tier-badge tier2">Tier2 · BEM</div>
+  <div class="tier-badge tier3">Tier3 · DSTE</div>
+  <div class="tier-badge validation">验证</div>
+  <div class="tier-progress">进度: 3/8 完成 (37.5%)</div>
+</nav>
+
+<!-- Main Layout -->
+<div class="main">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-title">五看三定 · 步骤</div>
+    <div class="step-list">
+      <div class="step-item done">
+        <span class="step-status done"></span>
+        <span>L1 · 看行业/趋势</span>
+      </div>
+      <div class="step-item done">
+        <span class="step-status done"></span>
+        <span>L2 · 看客户</span>
+      </div>
+      <div class="step-item active">
+        <span class="step-status running"></span>
+        <span>L3 · 看竞争</span>
+      </div>
+      <div class="step-item">
+        <span class="step-status pending"></span>
+        <span>L4 · 看自己</span>
+      </div>
+      <div class="step-item">
+        <span class="step-status pending"></span>
+        <span>L5 · 看机会</span>
+      </div>
+      <div class="step-item">
+        <span class="step-status pending"></span>
+        <span>L6 · 定目标</span>
+      </div>
+      <div class="step-item">
+        <span class="step-status pending"></span>
+        <span>L7 · 定策略</span>
+      </div>
+      <div class="step-item">
+        <span class="step-status pending"></span>
+        <span>L8 · 定控制点</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Step Form -->
+    <div class="step-form">
+      <h2 class="step-form-title">L3 · 看竞争</h2>
+      <p class="step-form-subtitle">五看 · 看竞争 — 竞争格局分析、竞品对比、护城河评估</p>
+
+      <div class="form-group">
+        <label class="form-label">主要竞争对手 <span class="form-required">*</span></label>
+        <textarea class="form-textarea" placeholder="每行一个竞争对手，例如：&#10;腾讯 — 社交+支付生态&#10;阿里 — 电商+云服务&#10;字节跳动 — 内容+广告">腾讯 — 社交+支付生态
+阿里 — 电商+云服务
+字节跳动 — 内容+广告
+美团 — 本地生活
+拼多多 — 下沉市场</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">竞争格局描述</label>
+        <textarea class="form-textarea" placeholder="描述当前竞争格局，市场集中度，主要竞争维度...">中国ToB SaaS市场呈现"一超多强"格局，腾讯凭借社交生态占据领先地位，阿里、字节跳动紧随其后。市场集中度中等，CR5约60%。</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">护城河分析</label>
+        <textarea class="form-textarea" placeholder="分析各竞争对手的护城河深度...">腾讯：社交网络效应+支付闭环；阿里：电商数据+云基础设施；字节：算法+内容生态；美团：线下履约网络；拼多多：供应链+下沉渠道。</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">补充背景信息</label>
+        <textarea class="form-textarea" placeholder="其他相关信息..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 16px;">
+        <button class="btn btn-primary">执行分析</button>
+        <button class="btn btn-secondary">保存草稿</button>
+        <button class="btn btn-secondary">重置</button>
+      </div>
+    </div>
+
+    <!-- Output Panel -->
+    <div class="output-panel">
+      <div class="output-header">
+        <h3 class="output-title">分析结果</h3>
+        <div class="output-actions">
+          <span class="status-badge running">● 分析中</span>
+          <button class="btn btn-secondary">导出</button>
+        </div>
+      </div>
+      <div class="output-content">
+        <h3>多视角综合判断</h3>
+        <p><strong>进攻方视角</strong>：腾讯社交生态壁垒深厚，但ToB转型缓慢；阿里云服务强势但缺乏社交入口；字节内容生态强大但B端积累不足。可攻击点：垂直行业SaaS、中小企业市场。</p>
+        <p><strong>防守方视角</strong>：腾讯凭借微信+企业微信双入口，护城河深度★★★★★；阿里云+钉钉组合，护城河深度★★★★☆；字节飞书+内容生态，护城河深度★★★★☆。</p>
+        <p><strong>中立观察者</strong>：市场仍处于早期，格局未定。关键变量：AI原生SaaS、国产化替代、行业垂直化。</p>
+
+        <h3>快速否决清单</h3>
+        <ul>
+          <li>⚠️ 政策风险：数据安全法、反垄断监管持续收紧</li>
+          <li>⚠️ 技术替代风险：AI Agent可能颠覆传统SaaS模式</li>
+        </ul>
+
+        <h3>逆向测试：战略有哪 5 种死法？</h3>
+        <ul>
+          <li><strong>死法一</strong>：大厂免费策略挤压生存空间（概率：高）</li>
+          <li><strong>死法二</strong>：客户预算削减，ToB市场萎缩（概率：中）</li>
+          <li><strong>死法三</strong>：AI Agent替代传统SaaS功能（概率：中）</li>
+          <li><strong>死法四</strong>：数据安全合规成本过高（概率：低）</li>
+          <li><strong>死法五</strong>：核心团队流失，执行力下降（概率：低）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Skills Panel -->
+    <div class="skills-panel">
+      <div class="skills-title">本步骤调用技能</div>
+      <div class="skills-list">
+        <span class="skill-tag primary">mbb-strategist(SWOT, Porter's)</span>
+        <span class="skill-tag primary">sn-deep-research</span>
+        <span class="skill-tag">sn-search-code</span>
+        <span class="skill-tag">多视角冲突模式</span>
+        <span class="skill-tag">快速否决清单</span>
+        <span class="skill-tag">逆向测试</span>
+      </div>
+    </div>
+
+    <!-- DSTE Calendar -->
+    <div class="dste-calendar">
+      <h3 class="dste-title">DSTE 年度日历</h3>
+      <div class="dste-grid">
+        <div class="dste-month 启动">
+          <div class="month-num">4月</div>
+          <div class="phase">启动</div>
+          <div class="tasks">研究计划</div>
+        </div>
+        <div class="dste-month 五看">
+          <div class="month-num">5月</div>
+          <div class="phase">五看</div>
+          <div class="tasks">行业/客户/竞争</div>
+        </div>
+        <div class="dste-month 五看">
+          <div class="month-num">6月</div>
+          <div class="phase">五看</div>
+          <div class="tasks">行业/客户/竞争</div>
+        </div>
+        <div class="dste-month 五看">
+          <div class="month-num">7月</div>
+          <div class="phase">五看</div>
+          <div class="tasks">自己/机会</div>
+        </div>
+        <div class="dste-month 三定">
+          <div class="month-num">8月</div>
+          <div class="phase">三定</div>
+          <div class="tasks">目标/策略/控制点</div>
+        </div>
+        <div class="dste-month 评审">
+          <div class="month-num">9月</div>
+          <div class="phase">评审</div>
+          <div class="tasks">L1报告</div>
+        </div>
+        <div class="dste-month 解码">
+          <div class="month-num">10月</div>
+          <div class="phase">解码</div>
+          <div class="tasks">CSF/KPI</div>
+        </div>
+        <div class="dste-month 解码">
+          <div class="month-num">11月</div>
+          <div class="phase">解码</div>
+          <div class="tasks">重点工作/PBC</div>
+        </div>
+        <div class="dste-month 预算">
+          <div class="month-num">12月</div>
+          <div class="phase">预算</div>
+          <div class="tasks">预算方案</div>
+        </div>
+        <div class="dste-month 执行">
+          <div class="month-num">1月</div>
+          <div class="phase">执行</div>
+          <div class="tasks">执行监控</div>
+        </div>
+        <div class="dste-month 执行">
+          <div class="month-num">2月</div>
+          <div class="phase">执行</div>
+          <div class="tasks">执行监控</div>
+        </div>
+        <div class="dste-month 复盘">
+          <div class="month-num">3月</div>
+          <div class="phase">复盘</div>
+          <div class="tasks">复盘报告</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  华为三板斧战略分析系统 · 基于华为五看三定+BEM+DSTE方法论 · 2026
+</footer>
+
+</body>
+</html>
