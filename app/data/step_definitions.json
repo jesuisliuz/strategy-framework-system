@@ -1,0 +1,259 @@
+{
+  "steps": [
+    {
+      "step_id": "L1_industry",
+      "tier": "tier1",
+      "number": 1,
+      "name": "看行业/趋势",
+      "method": "五看 · 看行业",
+      "core_task": "行业趋势分析、价值转移识别",
+      "chapter_in_report": "二、看行业/趋势（3,000-5,000字）",
+      "fields": [
+        {"id": "industry_name", "label": "行业名称", "type": "text", "required": true},
+        {"id": "market_size", "label": "当前市场规模（亿元）", "type": "number"},
+        {"id": "growth_rate", "label": "年增长率（%）", "type": "number"},
+        {"id": "tam", "label": "TAM（总可寻址市场）", "type": "text"},
+        {"id": "key_trends", "label": "关键趋势驱动因素", "type": "textarea", "required": true},
+        {"id": "technology_trends", "label": "关键技术趋势", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L2_customer",
+      "tier": "tier1",
+      "number": 2,
+      "name": "看客户",
+      "method": "五看 · 看客户",
+      "core_task": "客户细分、购买行为分析、用户画像",
+      "chapter_in_report": "三、看客户（3,000-5,000字）",
+      "fields": [
+        {"id": "target_customers", "label": "目标客户群体", "type": "textarea", "required": true},
+        {"id": "customer_segments", "label": "客户细分维度", "type": "textarea"},
+        {"id": "pain_points", "label": "核心痛点", "type": "textarea", "required": true},
+        {"id": "purchase_behavior", "label": "购买行为特征", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L3_competition",
+      "tier": "tier1",
+      "number": 3,
+      "name": "看竞争",
+      "method": "五看 · 看竞争",
+      "core_task": "竞争格局分析、竞品对比、护城河评估",
+      "chapter_in_report": "四、看竞争（3,000-5,000字）",
+      "fields": [
+        {"id": "competitors", "label": "主要竞争对手", "type": "textarea", "required": true},
+        {"id": "competitive_landscape", "label": "竞争格局描述", "type": "textarea"},
+        {"id": "moat_analysis", "label": "护城河分析", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L4_internal",
+      "tier": "tier1",
+      "number": 4,
+      "name": "看自己",
+      "method": "五看 · 看自己",
+      "core_task": "内部能力评估、SWOT分析",
+      "chapter_in_report": "五、看自己（2,000-3,000字）",
+      "fields": [
+        {"id": "company_profile", "label": "公司基本情况", "type": "textarea", "required": true},
+        {"id": "core_capabilities", "label": "核心能力", "type": "textarea", "required": true},
+        {"id": "resource_inventory", "label": "资源盘点", "type": "textarea"},
+        {"id": "data_file", "label": "内部数据文件（Excel）", "type": "file"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L5_opportunity",
+      "tier": "tier1",
+      "number": 5,
+      "name": "看机会",
+      "method": "五看 · 看机会",
+      "core_task": "机会识别、SPAN矩阵分析、风险场景评估",
+      "chapter_in_report": "六、看机会（2,000-3,000字）",
+      "fields": [
+        {"id": "opportunity_areas", "label": "机会领域", "type": "textarea", "required": true},
+        {"id": "risk_scenarios", "label": "风险场景", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L6_objective",
+      "tier": "tier1",
+      "number": 6,
+      "name": "定目标",
+      "method": "三定 · 定目标",
+      "core_task": "战略目标制定、OKR设定",
+      "chapter_in_report": "七、三定 → 定目标",
+      "fields": [
+        {"id": "strategic_vision", "label": "战略愿景", "type": "textarea", "required": true},
+        {"id": "objective_horizon", "label": "目标时间范围", "type": "select", "options": ["1年", "3年", "5年", "10年"], "required": true},
+        {"id": "key_objectives", "label": "关键目标（每行一个）", "type": "textarea", "required": true},
+        {"id": "success_metrics", "label": "成功衡量指标", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L7_strategy",
+      "tier": "tier1",
+      "number": 7,
+      "name": "定策略",
+      "method": "三定 · 定策略",
+      "core_task": "市场进入策略、定价策略、GTM设计",
+      "chapter_in_report": "七、三定 → 定策略",
+      "fields": [
+        {"id": "positioning", "label": "市场定位", "type": "textarea", "required": true},
+        {"id": "gtm_strategy", "label": "GTM策略", "type": "textarea"},
+        {"id": "pricing_strategy", "label": "定价策略", "type": "textarea"},
+        {"id": "channel_strategy", "label": "渠道策略", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "L8_control",
+      "tier": "tier1",
+      "number": 8,
+      "name": "定控制点",
+      "method": "三定 · 定控制点",
+      "core_task": "战略控制点识别、护城河构建",
+      "chapter_in_report": "七、三定 → 定控制点",
+      "fields": [
+        {"id": "control_points", "label": "战略控制点（每行一个）", "type": "textarea", "required": true},
+        {"id": "moat_building", "label": "护城河构建路径", "type": "textarea"},
+        {"id": "additional_context", "label": "补充背景信息", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "B1_csf",
+      "tier": "tier2",
+      "number": 9,
+      "name": "CSF导出",
+      "method": "BEM · 关键成功因素",
+      "core_task": "关键成功因素识别、与战略目标映射",
+      "chapter_in_report": "二、CSF导出（1,000字）",
+      "fields": [
+        {"id": "strategic_objectives", "label": "战略目标（从L6导入）", "type": "imported", "source": "L6_objective"},
+        {"id": "csf_candidates", "label": "候选CSF列表（每行一个）", "type": "textarea", "required": true},
+        {"id": "mapping_note", "label": "CSF与战略目标映射说明", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "B2_kpi",
+      "tier": "tier2",
+      "number": 10,
+      "name": "KPI导出",
+      "method": "BEM · 关键绩效指标",
+      "core_task": "KPI体系设计、目标值设定",
+      "chapter_in_report": "三、KPI体系（1,500字）",
+      "fields": [
+        {"id": "csf_list", "label": "CSF列表（从B1导入）", "type": "imported", "source": "B1_csf"},
+        {"id": "kpi_candidates", "label": "候选KPI列表（每行一个）", "type": "textarea", "required": true},
+        {"id": "kpi_targets", "label": "KPI目标值", "type": "textarea"},
+        {"id": "kpi_file", "label": "KPI数据文件（Excel）", "type": "file"}
+      ]
+    },
+    {
+      "step_id": "B3_ctq",
+      "tier": "tier2",
+      "number": 11,
+      "name": "CTQ-Y导出",
+      "method": "BEM · 关键品质点",
+      "core_task": "关键品质点识别、异常检测",
+      "chapter_in_report": "四、CTQ-Y（1,000字）",
+      "fields": [
+        {"id": "kpi_list", "label": "KPI列表（从B2导入）", "type": "imported", "source": "B2_kpi"},
+        {"id": "ctq_candidates", "label": "候选CTQ列表（每行一个）", "type": "textarea", "required": true},
+        {"id": "data_file", "label": "品质数据文件（Excel）", "type": "file"}
+      ]
+    },
+    {
+      "step_id": "B4_keytasks",
+      "tier": "tier2",
+      "number": 12,
+      "name": "重点工作分解",
+      "method": "BEM · 重点工作",
+      "core_task": "重点工作分解、责任人分配",
+      "chapter_in_report": "五、重点工作（1,500字）",
+      "fields": [
+        {"id": "ctq_list", "label": "CTQ列表（从B3导入）", "type": "imported", "source": "B3_ctq"},
+        {"id": "key_tasks", "label": "重点工作列表（每行一个）", "type": "textarea", "required": true},
+        {"id": "responsible_persons", "label": "责任人分配", "type": "textarea"},
+        {"id": "timeline", "label": "时间计划", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "B5_pbc",
+      "tier": "tier2",
+      "number": 13,
+      "name": "PBC签订",
+      "method": "BEM · 个人绩效承诺",
+      "core_task": "PBC模板设计、绩效承诺签订",
+      "chapter_in_report": "六、PBC（1,000字）",
+      "fields": [
+        {"id": "key_tasks", "label": "重点工作（从B4导入）", "type": "imported", "source": "B4_keytasks"},
+        {"id": "pbc_template", "label": "PBC模板", "type": "textarea", "required": true},
+        {"id": "pbc_file", "label": "PBC数据文件（Excel）", "type": "file"}
+      ]
+    },
+    {
+      "step_id": "D1_execution",
+      "tier": "tier3",
+      "number": 14,
+      "name": "SP/BP执行监控",
+      "method": "DSTE · 执行监控",
+      "core_task": "战略/业务计划执行跟踪、进度监控",
+      "chapter_in_report": "一、执行计划",
+      "fields": [
+        {"id": "pbc_list", "label": "PBC列表（从B5导入）", "type": "imported", "source": "B5_pbc"},
+        {"id": "execution_data", "label": "执行数据（Excel）", "type": "file", "required": true},
+        {"id": "progress_notes", "label": "进度备注", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "D2_analysis",
+      "tier": "tier3",
+      "number": 15,
+      "name": "经营分析会",
+      "method": "DSTE · 经营分析",
+      "core_task": "偏差分析、异常检测、趋势分析",
+      "chapter_in_report": "二、监控机制",
+      "fields": [
+        {"id": "execution_data", "label": "执行数据（从D1导入）", "type": "imported", "source": "D1_execution"},
+        {"id": "analysis_period", "label": "分析周期", "type": "select", "options": ["月度", "季度", "半年度", "年度"], "required": true},
+        {"id": "deviation_notes", "label": "偏差说明", "type": "textarea"},
+        {"id": "data_file", "label": "经营数据文件（Excel）", "type": "file"}
+      ]
+    },
+    {
+      "step_id": "D3_review",
+      "tier": "tier3",
+      "number": 16,
+      "name": "战略复盘",
+      "method": "DSTE · 战略复盘",
+      "core_task": "战略复盘、经验教训提炼、迭代建议",
+      "chapter_in_report": "三、复盘机制",
+      "fields": [
+        {"id": "review_period", "label": "复盘周期", "type": "select", "options": ["季度", "半年度", "年度"], "required": true},
+        {"id": "review_scope", "label": "复盘范围", "type": "textarea", "required": true},
+        {"id": "lessons_learned", "label": "经验教训", "type": "textarea"},
+        {"id": "iteration_suggestions", "label": "迭代建议", "type": "textarea"}
+      ]
+    },
+    {
+      "step_id": "cross_validation",
+      "tier": "validation",
+      "number": 17,
+      "name": "横纵验证",
+      "method": "验证 · 横纵分析法",
+      "core_task": "横向行业对齐+纵向时间推演验证",
+      "chapter_in_report": "附录：验证报告",
+      "fields": [
+        {"id": "validation_scope", "label": "验证范围", "type": "textarea", "required": true},
+        {"id": "horizontal_benchmark", "label": "横向对标（行业/竞品）", "type": "textarea"},
+        {"id": "vertical_projection", "label": "纵向推演（时间线）", "type": "textarea"}
+      ]
+    }
+  ]
+}
